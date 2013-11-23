@@ -1,0 +1,9 @@
+# Mac info files
+.DS_Store*
+
+# Maven stuff
+/target
+/dependency-reduced-pom.xml
+
+# NetBeans project files
+/nbactions.xml
