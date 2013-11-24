@@ -17,6 +17,7 @@ public class ServerMain {
     private long mapSeed = System.currentTimeMillis();
     
     private int nextSprite = 1;
+    private Map<Integer, Integer> clients = new HashMap<Integer, Integer>();
     private Map<Integer, Sprite> sprites = new HashMap<Integer, Sprite>();
     
     public static void main(String[] args) throws Exception {
@@ -72,6 +73,7 @@ public class ServerMain {
                 Player player = new Player(null);
                 player.updateState((Map<String, Object>) packet.get("data"));
                 int id = addSprite(player);
+                clients.put(clientId, id);
                 server.sendData(clientId, ImmutableMap.<String, Object>of(
                     "type", "login",
                     "id", id,
@@ -84,6 +86,14 @@ public class ServerMain {
                     "id", id,
                     "data", ImmutableList.<Object>of(Player.class.getName(), player.serializeState())
                 ), clientId);
+            } else if (packet.get("type").equals("logout")) {
+                server.removeClient(clientId);
+                int id = clients.remove(clientId);
+                server.sendBroadcast(ImmutableMap.<String, Object>of(
+                    "type", "sprite",
+                    "action", "remove",
+                    "id", id
+                ));
             } else if (packet.get("type").equals("request")) {
                 if (packet.get("request").equals("sprite-list")) {
                     ImmutableMap.Builder<String, Object> data = ImmutableMap.<String, Object>builder();
@@ -99,6 +109,7 @@ public class ServerMain {
                 }
             } else if (packet.get("type").equals("sprite")) {
                 if (packet.get("action").equals("update")) {
+                    sprites.get((Integer) packet.get("id")).updateState((Map<String, Object>) packet.get("data"));
                     server.sendBroadcast(ImmutableMap.<String, Object>of(
                         "type", "sprite",
                         "action", "update",

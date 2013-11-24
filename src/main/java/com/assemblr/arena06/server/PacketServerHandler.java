@@ -12,21 +12,26 @@ import java.util.Queue;
 public class PacketServerHandler extends SimpleChannelInboundHandler<AddressedData> {
     
     private int nextClient = 1;
+    private final Object clientLock;
     private final BiMap<Integer, InetSocketAddress> clients;
     private final Queue<Map<String, Object>> output;
     
-    public PacketServerHandler(BiMap<Integer, InetSocketAddress> clients, Queue<Map<String, Object>> output) {
+    public PacketServerHandler(Object clientLock, BiMap<Integer, InetSocketAddress> clients, Queue<Map<String, Object>> output) {
+        this.clientLock = clientLock;
         this.clients = clients;
         this.output = output;
     }
     
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, AddressedData msg) throws Exception {
-        Integer clientId = clients.inverse().get(msg.getSender());
-        if (clientId == null) {
-            clientId = nextClient;
-            clients.put(clientId, msg.getSender());
-            nextClient++;
+        Integer clientId;
+        synchronized (clientLock) {
+            clientId = clients.inverse().get(msg.getSender());
+            if (clientId == null) {
+                clientId = nextClient;
+                clients.put(clientId, msg.getSender());
+                nextClient++;
+            }
         }
         output.add(ImmutableMap.<String, Object>builder()
                 .putAll(msg.getData())

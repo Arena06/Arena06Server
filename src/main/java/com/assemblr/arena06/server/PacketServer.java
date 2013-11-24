@@ -33,6 +33,7 @@ public class PacketServer {
     private final int port;
     private Channel channel;
     
+    private final Object clientLock = new Object();
     private final BiMap<Integer, InetSocketAddress> clients = HashBiMap.<Integer, InetSocketAddress>create();
     private final Queue<Map<String, Object>> incomingPackets = new ConcurrentLinkedQueue<Map<String, Object>>();
     
@@ -53,7 +54,7 @@ public class PacketServer {
                     c.pipeline().addLast(
                             new PacketEncoder(), new DataEncoder(),
                             new PacketDecoder(), new DataDecoder(),
-                            new PacketServerHandler(clients, getIncomingPackets()));
+                            new PacketServerHandler(clientLock, clients, getIncomingPackets()));
                 }
             });
             channel = b.bind(port).sync().channel();
@@ -65,6 +66,12 @@ public class PacketServer {
     
     public Queue<Map<String, Object>> getIncomingPackets() {
         return incomingPackets;
+    }
+    
+    public void removeClient(int clientId) {
+        synchronized (clientLock) {
+            clients.remove(clientId);
+        }
     }
     
     public void sendBroadcast(Map<String, Object> data) {
