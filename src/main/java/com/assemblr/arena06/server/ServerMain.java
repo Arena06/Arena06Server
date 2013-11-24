@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class ServerMain {
     
-    private final PacketServer server = new PacketServer(30155);
+    private final PacketServer server;
     
     private final Thread runner;
     private boolean running = false;
@@ -21,11 +21,23 @@ public class ServerMain {
     private Map<Integer, Sprite> sprites = new HashMap<Integer, Sprite>();
     
     public static void main(String[] args) throws Exception {
-        ServerMain main = new ServerMain();
+        int port = 30155;
+        
+        for (String arg : args) {
+            String[] flag = arg.split("=", 2);
+            if (flag.length != 2) continue;
+            if (flag[0].equalsIgnoreCase("port")) {
+                port = Integer.parseInt(flag[1]);
+            }
+        }
+        
+        ServerMain main = new ServerMain(port);
         main.start();
     }
     
-    public ServerMain() {
+    public ServerMain(int port) {
+        server = new PacketServer(port);
+        
         runner = new Thread(new Runnable() {
             public void run() {
                 long lastUpdate = System.currentTimeMillis();
