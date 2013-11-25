@@ -97,7 +97,7 @@ public class ServerMain {
             ));
         } else if (type.equals("keep-alive")) {
         } else if (type.equals("login")) {
-            Player player = new Player(null);
+            Player player = new Player();
             player.updateState((Map<String, Object>) packet.get("data"));
             int id = addSprite(player);
             clients.put(clientId, id);
