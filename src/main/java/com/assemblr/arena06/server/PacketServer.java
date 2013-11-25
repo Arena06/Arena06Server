@@ -68,6 +68,10 @@ public class PacketServer {
         return incomingPackets;
     }
     
+    public InetSocketAddress getClientAddress(int clientId) {
+        return clients.get(clientId);
+    }
+    
     public void removeClient(int clientId) {
         synchronized (clientLock) {
             clients.remove(clientId);

@@ -98,9 +98,12 @@ public class ServerMain {
                     "id", id,
                     "data", ImmutableList.<Object>of(Player.class.getName(), player.serializeState())
                 ), clientId);
+                System.out.println("player " + player.getName() + " logged in (" + server.getClientAddress(clientId) + ")");
             } else if (packet.get("type").equals("logout")) {
                 server.removeClient(clientId);
                 int id = clients.remove(clientId);
+                Player player = (Player) sprites.get(id);
+                System.out.println("player " + player.getName() + " disconnected");
                 server.sendBroadcast(ImmutableMap.<String, Object>of(
                     "type", "sprite",
                     "action", "remove",
