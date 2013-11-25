@@ -2,8 +2,10 @@ package com.assemblr.arena06.server;
 
 import com.assemblr.arena06.common.data.Player;
 import com.assemblr.arena06.common.data.Sprite;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -158,10 +160,37 @@ public class ServerMain {
             Player player = (Player) sprites.get(playerId);
             if (player == null) return;
             String message = (String) packet.get("message");
+            if (message.startsWith("/")) {
+                String[] split = message.substring(1).split(" ");
+                String[] args = Arrays.copyOfRange(split, 1, split.length);
+                handleCommand(split[0], args, clientId, player);
+            } else {
+                server.sendBroadcast(ImmutableMap.<String, Object>of(
+                    "type", "chat",
+                    "timestamp", System.currentTimeMillis(),
+                    "content", "[" + player.getName() + "]  " + message
+                ));
+            }
+        }
+    }
+    
+    private void handleCommand(String command, String[] args, int clientId, Player sender) {
+        if (command.equalsIgnoreCase("list")) {
+            StringBuilder message = new StringBuilder();
+            for (int i : clients.values()) {
+                Player player = (Player) sprites.get(i);
+                message.append("- ").append(player.getName()).append("\n");
+            }
+            server.sendData(clientId, ImmutableMap.<String, Object>of(
+                "type", "chat",
+                "timestamp", System.currentTimeMillis(),
+                "content", message.toString()
+            ));
+        } else if (command.equalsIgnoreCase("me")) {
             server.sendBroadcast(ImmutableMap.<String, Object>of(
                 "type", "chat",
                 "timestamp", System.currentTimeMillis(),
-                "content", "[" + player.getName() + "]  " + message
+                "content", "* " + sender.getName() + " " + Joiner.on(" ").skipNulls().join(args)
             ));
         }
     }
