@@ -7,6 +7,7 @@ import com.assemblr.arena06.common.net.PacketDecoder;
 import com.assemblr.arena06.common.net.PacketEncoder;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -112,6 +113,34 @@ public class PacketServer {
         InetSocketAddress client = clients.get(clientId);
         if (client != null)
             channel.writeAndFlush(new AddressedData(data, null, client));
+    }
+    
+    public void sendChat(int clientId, String message) {
+        sendData(clientId, ImmutableMap.<String, Object>of(
+            "type", "chat",
+            "timestamp", System.currentTimeMillis(),
+            "content", message
+        ));
+    }
+    
+    public void sendChatBroadcast(String message) {
+        sendBroadcast(ImmutableMap.<String, Object>of(
+            "type", "chat",
+            "timestamp", System.currentTimeMillis(),
+            "content", message
+        ));
+    }
+    
+    public void sendChatBroadcast(String message, int exclude) {
+        sendChatBroadcast(message, ImmutableSet.<Integer>of(exclude));
+    }
+    
+    public void sendChatBroadcast(String message, Set<Integer> exclude) {
+        sendBroadcast(ImmutableMap.<String, Object>of(
+            "type", "chat",
+            "timestamp", System.currentTimeMillis(),
+            "content", message
+        ), exclude);
     }
     
 }

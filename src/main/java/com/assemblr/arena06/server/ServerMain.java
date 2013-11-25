@@ -113,6 +113,7 @@ public class ServerMain {
                 "id", id,
                 "data", ImmutableList.<Object>of(Player.class.getName(), player.serializeState())
             ), clientId);
+            server.sendChatBroadcast("~ " + player.getName() + " entered the game", id);
             System.out.println("player " + player.getName() + " logged in (" + server.getClientAddress(clientId) + ")");
         } else if (type.equals("logout")) {
             server.removeClient(clientId);
@@ -126,6 +127,7 @@ public class ServerMain {
                 "action", "remove",
                 "id", id
             ));
+            server.sendChatBroadcast("~ " + player.getName() + " left the game", id);
         } else if (type.equals("request")) {
             String request = (String) packet.get("request");
             if (request == null) return;
@@ -165,11 +167,7 @@ public class ServerMain {
                 String[] args = Arrays.copyOfRange(split, 1, split.length);
                 handleCommand(split[0], args, clientId, player);
             } else {
-                server.sendBroadcast(ImmutableMap.<String, Object>of(
-                    "type", "chat",
-                    "timestamp", System.currentTimeMillis(),
-                    "content", "[" + player.getName() + "]  " + message
-                ));
+                server.sendChatBroadcast("[" + player.getName() + "]  " + message);
             }
         }
     }
@@ -181,16 +179,13 @@ public class ServerMain {
                 Player player = (Player) sprites.get(i);
                 message.append("- ").append(player.getName()).append("\n");
             }
-            server.sendData(clientId, ImmutableMap.<String, Object>of(
-                "type", "chat",
-                "timestamp", System.currentTimeMillis(),
-                "content", message.toString()
-            ));
+            server.sendChat(clientId, message.toString());
         } else if (command.equalsIgnoreCase("map")) {
             if (args.length == 0) return;
             String subcommand = args[0];
             if (subcommand.equalsIgnoreCase("regen")) {
                 mapSeed = System.currentTimeMillis();
+                server.sendChatBroadcast("# reloading map");
                 server.sendBroadcast(ImmutableMap.<String, Object>of(
                     "type", "map",
                     "action", "load",
@@ -198,11 +193,7 @@ public class ServerMain {
                 ));
             }
         } else if (command.equalsIgnoreCase("me")) {
-            server.sendBroadcast(ImmutableMap.<String, Object>of(
-                "type", "chat",
-                "timestamp", System.currentTimeMillis(),
-                "content", "* " + sender.getName() + " " + Joiner.on(" ").skipNulls().join(args)
-            ));
+            server.sendChatBroadcast("* " + sender.getName() + " " + Joiner.on(" ").skipNulls().join(args));
         }
     }
     
