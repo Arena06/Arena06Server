@@ -80,63 +80,76 @@ public class ServerMain {
     public void update(double delta) {
         Map<String, Object> packet;
         while ((packet = server.getIncomingPackets().poll()) != null) {
-            int clientId = (Integer) packet.get("client-id");
-            if (packet.get("type").equals("handshake")) {
+            processPacket(packet);
+        }
+    }
+    
+    private void processPacket(Map<String, Object> packet) {
+        int clientId = (Integer) packet.get("client-id");
+        String type = (String) packet.get("type");
+        if (type == null) return;
+        
+        if (type.equals("handshake")) {
+            server.sendData(clientId, ImmutableMap.<String, Object>of(
+                "type", "handshake"
+            ));
+        } else if (type.equals("keep-alive")) {
+        } else if (type.equals("login")) {
+            Player player = new Player(null);
+            player.updateState((Map<String, Object>) packet.get("data"));
+            int id = addSprite(player);
+            clients.put(clientId, id);
+            server.sendData(clientId, ImmutableMap.<String, Object>of(
+                "type", "login",
+                "id", id,
+                "data", player.serializeState(),
+                "map-seed", mapSeed
+            ));
+            server.sendBroadcast(ImmutableMap.<String, Object>of(
+                "type", "sprite",
+                "action", "create",
+                "id", id,
+                "data", ImmutableList.<Object>of(Player.class.getName(), player.serializeState())
+            ), clientId);
+            System.out.println("player " + player.getName() + " logged in (" + server.getClientAddress(clientId) + ")");
+        } else if (type.equals("logout")) {
+            server.removeClient(clientId);
+            Integer id = clients.remove(clientId);
+            if (id == null) return;
+            Player player = (Player) sprites.get(id);
+            System.out.println("player " + player.getName() + " disconnected");
+            server.sendBroadcast(ImmutableMap.<String, Object>of(
+                "type", "sprite",
+                "action", "remove",
+                "id", id
+            ));
+        } else if (type.equals("request")) {
+            String request = (String) packet.get("request");
+            if (request == null) return;
+            if (request.equals("sprite-list")) {
+                ImmutableMap.Builder<String, Object> data = ImmutableMap.<String, Object>builder();
+                for (Map.Entry<Integer, Sprite> entry : sprites.entrySet()) {
+                    data.put(entry.getKey().toString(), ImmutableList.<Object>of(
+                             entry.getValue().getClass().getName(), entry.getValue().serializeState()));
+                }
                 server.sendData(clientId, ImmutableMap.<String, Object>of(
-                    "type", "handshake"
+                    "type", "request",
+                    "request", "sprite-list",
+                    "data", data.build()
                 ));
-            } else if (packet.get("type").equals("keep-alive")) {
-            } else if (packet.get("type").equals("login")) {
-                Player player = new Player(null);
-                player.updateState((Map<String, Object>) packet.get("data"));
-                int id = addSprite(player);
-                clients.put(clientId, id);
-                server.sendData(clientId, ImmutableMap.<String, Object>of(
-                    "type", "login",
-                    "id", id,
-                    "data", player.serializeState(),
-                    "map-seed", mapSeed
-                ));
+            }
+        } else if (type.equals("sprite")) {
+            String action = (String) packet.get("action");
+            if (action.equals("update")) {
+                Sprite s = sprites.get((Integer) packet.get("id"));
+                if (s == null) return;
+                s.updateState((Map<String, Object>) packet.get("data"));
                 server.sendBroadcast(ImmutableMap.<String, Object>of(
                     "type", "sprite",
-                    "action", "create",
-                    "id", id,
-                    "data", ImmutableList.<Object>of(Player.class.getName(), player.serializeState())
+                    "action", "update",
+                    "id", packet.get("id"),
+                    "data", packet.get("data")
                 ), clientId);
-                System.out.println("player " + player.getName() + " logged in (" + server.getClientAddress(clientId) + ")");
-            } else if (packet.get("type").equals("logout")) {
-                server.removeClient(clientId);
-                int id = clients.remove(clientId);
-                Player player = (Player) sprites.get(id);
-                System.out.println("player " + player.getName() + " disconnected");
-                server.sendBroadcast(ImmutableMap.<String, Object>of(
-                    "type", "sprite",
-                    "action", "remove",
-                    "id", id
-                ));
-            } else if (packet.get("type").equals("request")) {
-                if (packet.get("request").equals("sprite-list")) {
-                    ImmutableMap.Builder<String, Object> data = ImmutableMap.<String, Object>builder();
-                    for (Map.Entry<Integer, Sprite> entry : sprites.entrySet()) {
-                        data.put(entry.getKey().toString(), ImmutableList.<Object>of(
-                                 entry.getValue().getClass().getName(), entry.getValue().serializeState()));
-                    }
-                    server.sendData(clientId, ImmutableMap.<String, Object>of(
-                        "type", "request",
-                        "request", "sprite-list",
-                        "data", data.build()
-                    ));
-                }
-            } else if (packet.get("type").equals("sprite")) {
-                if (packet.get("action").equals("update")) {
-                    sprites.get((Integer) packet.get("id")).updateState((Map<String, Object>) packet.get("data"));
-                    server.sendBroadcast(ImmutableMap.<String, Object>of(
-                        "type", "sprite",
-                        "action", "update",
-                        "id", packet.get("id"),
-                        "data", packet.get("data")
-                    ), clientId);
-                }
             }
         }
     }
