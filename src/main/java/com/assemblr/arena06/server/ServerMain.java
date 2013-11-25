@@ -116,7 +116,8 @@ public class ServerMain {
             server.removeClient(clientId);
             Integer id = clients.remove(clientId);
             if (id == null) return;
-            Player player = (Player) sprites.get(id);
+            Player player = (Player) sprites.remove(id);
+            if (player == null) return;
             System.out.println("player " + player.getName() + " disconnected");
             server.sendBroadcast(ImmutableMap.<String, Object>of(
                 "type", "sprite",
@@ -151,6 +152,17 @@ public class ServerMain {
                     "data", packet.get("data")
                 ), clientId);
             }
+        } else if (type.equals("chat")) {
+            Integer playerId = clients.get(clientId);
+            if (playerId == null) return;
+            Player player = (Player) sprites.get(playerId);
+            if (player == null) return;
+            String message = (String) packet.get("message");
+            server.sendBroadcast(ImmutableMap.<String, Object>of(
+                "type", "chat",
+                "timestamp", System.currentTimeMillis(),
+                "content", "[" + player.getName() + "]  " + message
+            ));
         }
     }
     
