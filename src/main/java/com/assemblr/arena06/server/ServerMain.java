@@ -81,7 +81,12 @@ public class ServerMain {
         Map<String, Object> packet;
         while ((packet = server.getIncomingPackets().poll()) != null) {
             int clientId = (Integer) packet.get("client-id");
-            if (packet.get("type").equals("login")) {
+            if (packet.get("type").equals("handshake")) {
+                server.sendData(clientId, ImmutableMap.<String, Object>of(
+                    "type", "handshake"
+                ));
+            } else if (packet.get("type").equals("keep-alive")) {
+            } else if (packet.get("type").equals("login")) {
                 Player player = new Player(null);
                 player.updateState((Map<String, Object>) packet.get("data"));
                 int id = addSprite(player);
