@@ -186,6 +186,17 @@ public class ServerMain {
                 "timestamp", System.currentTimeMillis(),
                 "content", message.toString()
             ));
+        } else if (command.equalsIgnoreCase("map")) {
+            if (args.length == 0) return;
+            String subcommand = args[0];
+            if (subcommand.equalsIgnoreCase("regen")) {
+                mapSeed = System.currentTimeMillis();
+                server.sendBroadcast(ImmutableMap.<String, Object>of(
+                    "type", "map",
+                    "action", "load",
+                    "seed", mapSeed
+                ));
+            }
         } else if (command.equalsIgnoreCase("me")) {
             server.sendBroadcast(ImmutableMap.<String, Object>of(
                 "type", "chat",
