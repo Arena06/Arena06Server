@@ -7,6 +7,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class ServerMain {
@@ -17,10 +19,13 @@ public class ServerMain {
     private boolean running = false;
     
     private long mapSeed = System.currentTimeMillis();
+    private long lastKeepAliveCheck = 0;
     
     private int nextSprite = 1;
     private Map<Integer, Integer> clients = new HashMap<Integer, Integer>();
     private Map<Integer, Sprite> sprites = new HashMap<Integer, Sprite>();
+    
+    private List<Integer> activeClients = new LinkedList<Integer>();
     
     public static void main(String[] args) throws Exception {
         int port = 30155;
@@ -84,6 +89,11 @@ public class ServerMain {
         while ((packet = server.getIncomingPackets().poll()) != null) {
             processPacket(packet);
         }
+        if (System.currentTimeMillis() - lastKeepAliveCheck > 5000) {
+            checkClients();
+            activeClients.clear();
+            lastKeepAliveCheck = System.currentTimeMillis();
+        }
     }
     
     private void processPacket(Map<String, Object> packet) {
@@ -96,6 +106,7 @@ public class ServerMain {
                 "type", "handshake"
             ));
         } else if (type.equals("keep-alive")) {
+            activeClients.add(clientId);
         } else if (type.equals("login")) {
             Player player = new Player();
             player.updateState((Map<String, Object>) packet.get("data"));
@@ -201,6 +212,15 @@ public class ServerMain {
         sprites.put(nextSprite, s);
         nextSprite++;
         return nextSprite - 1;
+    }
+    
+    private void checkClients() {
+        for (Map.Entry<Integer, Integer> client : clients.entrySet()) {
+            if (!activeClients.contains(client.getKey())) {
+                server.removeClient(client.getKey());
+                server.sendChatBroadcast("~ " + ((Player) sprites.get(client.getValue())).getName() + " has been kicked for inactivity", client.getKey());
+            }
+        }
     }
     
 }
