@@ -1,5 +1,6 @@
 package com.assemblr.arena06.server;
 
+import com.assemblr.arena06.common.chat.ChatBroadcaster;
 import com.assemblr.arena06.common.net.AddressedData;
 import com.assemblr.arena06.common.net.DataDecoder;
 import com.assemblr.arena06.common.net.DataEncoder;
@@ -24,7 +25,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class PacketServer {
+public class PacketServer implements ChatBroadcaster {
     
     public static void main(String[] args) throws Exception {
         PacketServer server = new PacketServer(30155);
@@ -123,6 +124,7 @@ public class PacketServer {
         ));
     }
     
+    @Override
     public void sendChatBroadcast(String message) {
         sendBroadcast(ImmutableMap.<String, Object>of(
             "type", "chat",
