@@ -25,8 +25,8 @@ public class SpriteCollisionManager {
             for (Map.Entry<Integer, Sprite> interactor : spritesRemaining.entrySet()) {
                 Sprite s2 = interactor.getValue();
                 if (s1.getBounds().intersects(s2.getBounds())) {
-                    s1.onContact(s2, interactor.getKey(), spritesPendingRemoveal, chatter);
-                    s2.onContact(s1, id, spritesPendingRemoveal, chatter);
+                    s1.onContact(id, s2, interactor.getKey(), spritesPendingRemoveal, chatter);
+                    s2.onContact(interactor.getKey(), s1, id, spritesPendingRemoveal, chatter);
                 }
             }
             spritesRemaining.remove(id);

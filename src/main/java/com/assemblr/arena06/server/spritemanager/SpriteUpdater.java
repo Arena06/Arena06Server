@@ -8,29 +8,33 @@ import com.assemblr.arena06.common.data.map.TileType;
 import com.assemblr.arena06.common.data.map.generators.MapGenerator;
 import com.assemblr.arena06.common.data.map.generators.RoomGenerator;
 import com.assemblr.arena06.server.PacketServer;
+import com.assemblr.arena06.server.ServerMain;
 import com.google.common.collect.ImmutableMap;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class SpriteUpdater {
     private Map<Integer, Sprite> sprites = new HashMap<Integer, Sprite>();
     private Map<Integer, UpdateableSprite> updateableSprites = new HashMap<Integer, UpdateableSprite>();
     private final PacketServer server;
+    private final ServerMain mainServer;
     private double mapSeed;
     private TileType[][] map;
     private MapGenerator mapGenerator = new RoomGenerator();
     private final SpriteCollisionManager spriteCollisionManager = new SpriteCollisionManager();
     
-    public SpriteUpdater(PacketServer server, long mapSeed) {
-        this.server = server;
+    public SpriteUpdater(PacketServer packetServer, ServerMain mainServer, long mapSeed) {
+        this.server = packetServer;
+        this.mainServer = mainServer;
         this.mapSeed = mapSeed;
         map = mapGenerator.generateMap(mapSeed);
     }
     public void updateAllSprites(double delta) {
         for (Map.Entry<Integer, UpdateableSprite> sprite : updateableSprites.entrySet()) {
-            System.out.println("dsa");
             UpdateableSprite updateableSprite = sprite.getValue();
             updateableSprite.update(delta);
             //this is where collision detection and players getting shot will happen
@@ -44,16 +48,23 @@ public class SpriteUpdater {
         
         spriteCollisionManager.checkContact(sprites, spritesPendingRemoveal, server);
         
-        for (Integer id :spritesPendingRemoveal) {
-            server.sendBroadcast(ImmutableMap.<String, Object>of(
-                            "type", "sprite",
-                            "action", "remove",
-                            "id", id
-                    ));
-            sprites.remove(id);
-            if (updateableSprites.containsKey(id)) {
-                updateableSprites.remove(id);
+        for (Integer id : spritesPendingRemoveal) {
+            if (sprites.get(id) instanceof Player) {
+                mainServer.killPlayer(id);
+            } else {
+                server.sendBroadcast(ImmutableMap.<String, Object>of(
+                        "type", "sprite",
+                        "action", "remove",
+                        "id", id
+                ));
+
+                sprites.remove(id);
+                if (updateableSprites.containsKey(id)) {
+                    updateableSprites.remove(id);
+                }
             }
+            
+            
         }
         spritesPendingRemoveal.clear();
         
@@ -79,5 +90,16 @@ public class SpriteUpdater {
      */
     public Map<Integer, UpdateableSprite> getUpdateableSprites() {
         return updateableSprites;
+    }
+    Random random = new Random();
+    public void randomizePlayerPositions(List<Integer> players) {
+        for (int i : players) {
+            Player player = (Player) sprites.get(i);
+            do {
+                player.setPosition(new Point2D.Double(random.nextInt(map.length) * MapGenerator.TILE_SIZE, random.nextInt(map[0].length) * MapGenerator.TILE_SIZE));
+            } while (map[(int) Math.round(player.getPosition().x / MapGenerator.TILE_SIZE)][(int) Math.round(player.getPosition().y / MapGenerator.TILE_SIZE)] != TileType.FLOOR);
+            
+            
+        }
     }
 }
