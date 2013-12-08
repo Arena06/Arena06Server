@@ -166,6 +166,11 @@ public class ServerMain {
                 "id", id
             ));
             server.sendChatBroadcast("~ " + player.getName() + " left the game", id);
+            if (livingPlayers.size() == 1) {
+                server.sendChatBroadcast("~ Player " + ((Player) (getSprites().get(livingPlayers.get(0)))).getName() + " has won the match");
+                nextMatchCountDown = 5;
+                winners.add(((Player) (getSprites().get(livingPlayers.get(0)))).getName());
+            }
         } else if (type.equals("request")) {
             String request = (String) packet.get("request");
             if (request == null) return;
@@ -249,15 +254,35 @@ public class ServerMain {
                 mapSeed = System.currentTimeMillis();
                 server.sendChatBroadcast("# reloading map");
                 server.sendBroadcast(ImmutableMap.<String, Object>of(
-                    "type", "map",
-                    "action", "load",
-                    "seed", mapSeed
+                        "type", "map",
+                        "action", "load",
+                        "seed", mapSeed
                 ));
             }
         } else if (command.equalsIgnoreCase("me")) {
             server.sendChatBroadcast("* " + sender.getName() + " " + Joiner.on(" ").skipNulls().join(args));
-        }
+        } else if (command.equalsIgnoreCase("kill")) {
+            killPlayer(clientId);
+        } else if (command.equalsIgnoreCase("match")) {
+            if (args.length > 0 && args[0].equalsIgnoreCase("restart")) {
+                server.sendChatBroadcast("~ Starting a new round");
+                nextMatchCountDown = 5;
+            }
+        } else if (command.equalsIgnoreCase("winners")) {
+            if (winners.size() == 0) {
+                server.sendChat(clientId, "~ No matches have been won");
+            } else {
+            server.sendChat(clientId, "~ The past winners have been:");
+            String temp = "";
+            for (int i = 0; i <winners.size(); i++) {
+                temp += winners.get(i);
+                temp +=", ";
+            }
+            temp = temp.substring(0, temp.length() - 2);
+            server.sendChat(clientId, temp);
+        }}
     }
+    
     private void sendSpriteList(int clientId) {
         ImmutableMap.Builder<String, Object> data = ImmutableMap.<String, Object>builder();
                 for (Map.Entry<Integer, Sprite> entry : getSprites().entrySet()) {
