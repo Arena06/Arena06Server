@@ -154,11 +154,13 @@ public class ServerMain {
             server.sendChatBroadcast("~ " + player.getName() + " entered the game", id);
             System.out.println("player " + player.getName() + " logged in (" + server.getClientAddress(clientId) + ")");
         } else if (type.equals("logout")) {
+            killPlayer(clients.get(clientId));
             server.removeClient(clientId);
             Integer id = clients.remove(clientId);
             if (id == null) return;
             Player player = (Player) getSprites().remove(id);
             if (player == null) return;
+            players.remove(id);
             System.out.println("player " + player.getName() + " disconnected");
             server.sendBroadcast(ImmutableMap.<String, Object>of(
                 "type", "sprite",
@@ -166,11 +168,6 @@ public class ServerMain {
                 "id", id
             ));
             server.sendChatBroadcast("~ " + player.getName() + " left the game", id);
-            if (livingPlayers.size() == 1) {
-                server.sendChatBroadcast("~ Player " + ((Player) (getSprites().get(livingPlayers.get(0)))).getName() + " has won the match");
-                nextMatchCountDown = 5;
-                winners.add(((Player) (getSprites().get(livingPlayers.get(0)))).getName());
-            }
         } else if (type.equals("request")) {
             String request = (String) packet.get("request");
             if (request == null) return;
@@ -320,6 +317,12 @@ public class ServerMain {
         return nextSprite - 1;
     }
     private void startNewRound() {
+        if (players.size() == 1) {
+            inRound = false;
+            players.entrySet().iterator().next().getValue().kill();
+            broadcastSpriteList();
+            return;
+        }
         inRound = true;
         server.sendChatBroadcast("~ Starting a new round");
         livingPlayers.clear();
@@ -327,6 +330,7 @@ public class ServerMain {
         for (Integer id : livingPlayers) {
             Player player  = (Player) getSprites().get(id);
             player.setAlive(true);
+            player.fillMagazine();
         }
         spriteUpdater.randomizePlayerPositions(livingPlayers);
         broadcastSpriteList();
@@ -334,6 +338,7 @@ public class ServerMain {
     private void checkClients() {
         for (Map.Entry<Integer, Integer> client : clients.entrySet()) {
             if (!activeClients.contains(client.getKey())) {
+                killPlayer(client.getValue());
                 server.removeClient(client.getKey());
                 Integer id = clients.remove(client.getKey());
                 if (id == null) {
