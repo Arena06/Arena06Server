@@ -168,6 +168,9 @@ public class ServerMain {
                 "id", id
             ));
             server.sendChatBroadcast("~ " + player.getName() + " left the game", id);
+            if (clients.size() <= 1) {
+                inRound = false;
+            }
         } else if (type.equals("request")) {
             String request = (String) packet.get("request");
             if (request == null) return;
@@ -269,8 +272,7 @@ public class ServerMain {
             if (winners.size() == 0) {
                 server.sendChat(clientId, "~ No matches have been won");
             } else {
-            server.sendChat(clientId, "~ The past winners have been:");
-            String temp = "";
+            String temp = "~ The past winners have been: ";
             for (int i = 0; i <winners.size(); i++) {
                 temp += winners.get(i);
                 temp +=", ";
