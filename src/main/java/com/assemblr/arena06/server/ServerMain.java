@@ -27,6 +27,9 @@ public class ServerMain {
     private boolean inRound = false;
     private double nextMatchCountDown = -1;
     
+    private final double timeBetweenFullUpdates = 100;
+    private double timeElapsedBetweenFullUpdates;
+    
     private List<String> winners = new ArrayList<String>();
     
     private int nextSprite = 1;
@@ -96,11 +99,16 @@ public class ServerMain {
     }
     
     public void update(double delta) {
+        timeElapsedBetweenFullUpdates += delta;
+        if (timeElapsedBetweenFullUpdates >= timeBetweenFullUpdates) {
+            broadcastSpriteList();
+            timeElapsedBetweenFullUpdates = 0;
+        }
         Map<String, Object> packet;
         while ((packet = server.getIncomingPackets().poll()) != null) {
             processPacket(packet);
         }
-        if (System.currentTimeMillis() - lastKeepAliveCheck > 5000) {
+        if (System.currentTimeMillis() - lastKeepAliveCheck > 8000) {
             checkClients();
             activeClients.clear();
             lastKeepAliveCheck = System.currentTimeMillis();
