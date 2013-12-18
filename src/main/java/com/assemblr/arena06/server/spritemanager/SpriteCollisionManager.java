@@ -17,7 +17,7 @@ import java.util.Map;
  * @author Henry
  */
 public class SpriteCollisionManager {
-    public void checkContact(Map<Integer, Sprite> sprites, List<Integer> spritesPendingRemoveal, ChatBroadcaster chatter) {
+    public void checkContact(Map<Integer, Sprite> sprites, List<Integer> dirtySprites, List<Integer> spritesPendingRemoveal, ChatBroadcaster chatter) {
         Map<Integer, Sprite> spritesRemaining = new HashMap<Integer, Sprite>(sprites);
         for (Map.Entry<Integer, Sprite> sprite : sprites.entrySet()) {
             Integer id = sprite.getKey();
@@ -25,8 +25,8 @@ public class SpriteCollisionManager {
             for (Map.Entry<Integer, Sprite> interactor : spritesRemaining.entrySet()) {
                 Sprite s2 = interactor.getValue();
                 if (s1.getBounds().intersects(s2.getBounds())) {
-                    s1.onContact(id, s2, interactor.getKey(), spritesPendingRemoveal, chatter);
-                    s2.onContact(interactor.getKey(), s1, id, spritesPendingRemoveal, chatter);
+                    s1.onContact(id, s2, interactor.getKey(), dirtySprites, spritesPendingRemoveal, chatter);
+                    s2.onContact(interactor.getKey(), s1, id, dirtySprites,  spritesPendingRemoveal, chatter);
                 }
             }
             spritesRemaining.remove(id);

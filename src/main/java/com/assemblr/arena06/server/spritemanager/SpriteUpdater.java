@@ -46,8 +46,19 @@ public class SpriteUpdater {
             }
         }
         
-        spriteCollisionManager.checkContact(sprites, spritesPendingRemoveal, server);
-        
+        spriteCollisionManager.checkContact(sprites, dirtySprites, spritesPendingRemoveal, server);
+        for (Integer id : dirtySprites) {
+                server.sendBroadcast(ImmutableMap.<String, Object>of(
+                        "type", "sprite",
+                        "action", "update",
+                        "id", id,
+                        "data", getSprites().get(id).serializeState()
+                ));
+                if (getSprites().get(id) instanceof  Player) {
+                    ((Player)getSprites().get(id)).setClientIsCurrent(false);
+                }
+        }
+        dirtySprites.clear();
         for (Integer id : spritesPendingRemoveal) {
             if (sprites.get(id) instanceof Player) {
                 mainServer.killPlayer(id);
@@ -71,6 +82,7 @@ public class SpriteUpdater {
     }
     
     private List<Integer> spritesPendingRemoveal = new ArrayList<Integer>();
+    private List<Integer> dirtySprites = new ArrayList<Integer>();
     
     private boolean shouldBeDestroyed(Bullet b) {
         return map[b.getTileX()][b.getTileY()] == TileType.WALL || map[b.getTileX()][b.getTileY()] == TileType.NONE
