@@ -220,7 +220,7 @@ public class ServerMain {
                                 "type", "sprite",
                                 "action", "create",
                                 "id", id,
-                                "data", ImmutableList.<Object>of(spriteClass.getName(), sprite.serializeState())
+                                "data", ImmutableList.<Object>of(spriteClass.getName(), sprite.serializeState(true))
                         ));
                     } catch (Exception ex) {
                         ex.printStackTrace();
@@ -361,7 +361,7 @@ public class ServerMain {
                         "action", "remove",
                         "id", id
                 ));
-                server.sendChatBroadcast("~ " + ((Player) getSprites().get(client.getValue())).getName() + " has been kicked for inactivity", client.getKey());
+                 server.sendChatBroadcast("~ " + ((Player) getSprites().get(client.getValue())).getName() + " has been kicked for inactivity", client.getKey());
             }
         }
     }
