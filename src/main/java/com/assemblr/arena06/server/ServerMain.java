@@ -124,6 +124,7 @@ public class ServerMain {
     }
     
     private void processPacket(Map<String, Object> packet) {
+	
         int clientId = (Integer) packet.get("client-id");
         String type = (String) packet.get("type");
         if (type == null) return;

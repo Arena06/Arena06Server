@@ -2,6 +2,8 @@ package com.assemblr.arena06.server;
 
 import com.assemblr.arena06.common.chat.ChatBroadcaster;
 import com.assemblr.arena06.common.net.AddressedData;
+import com.assemblr.arena06.common.net.ChildChannelResolver;
+import com.assemblr.arena06.common.net.ChildChannelTablePopulator;
 import com.assemblr.arena06.common.net.DataDecoder;
 import com.assemblr.arena06.common.net.DataEncoder;
 import com.assemblr.arena06.common.net.PacketDecoder;
@@ -10,16 +12,17 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.netty.bootstrap.Bootstrap;
+import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.DatagramChannel;
-import io.netty.channel.socket.nio.NioDatagramChannel;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import java.net.InetSocketAddress;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -46,16 +49,24 @@ public class PacketServer implements ChatBroadcaster {
     public void run() throws Exception {
         EventLoopGroup group = new NioEventLoopGroup();
         try {
-            Bootstrap b = new Bootstrap();
+            ServerBootstrap b = new ServerBootstrap();
+	    final Map<InetSocketAddress, Channel> resolutionTable = new HashMap<InetSocketAddress, Channel>();
             b.group(group)
-             .channel(NioDatagramChannel.class)
+             .channel(NioServerSocketChannel.class)
+             .handler(new ChannelInitializer<NioServerSocketChannel>() {
+		@Override
+		protected void initChannel(NioServerSocketChannel c) throws Exception {
+		    c.pipeline().addLast(new ChildChannelResolver(resolutionTable));
+		}
+	    })
              .option(ChannelOption.SO_BROADCAST, true)
-             .handler(new ChannelInitializer<DatagramChannel>() {
+             .childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override
-                protected void initChannel(DatagramChannel c) throws Exception {
+                protected void initChannel(SocketChannel c) throws Exception {
                     c.pipeline().addLast(
                             new PacketEncoder(), new DataEncoder(),
                             new PacketDecoder(), new DataDecoder(),
+			    new ChildChannelTablePopulator(resolutionTable),
                             new PacketServerHandler(clientLock, clients, getIncomingPackets()));
                 }
             });
@@ -112,8 +123,10 @@ public class PacketServer implements ChatBroadcaster {
             }
         }
         InetSocketAddress client = clients.get(clientId);
-        if (client != null)
+        if (client != null) {
+	    System.out.println("channel writeable: " + channel.isWritable());
             channel.writeAndFlush(new AddressedData(data, null, client));
+	}
     }
     
     public void sendChat(int clientId, String message) {
