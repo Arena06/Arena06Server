@@ -50,15 +50,15 @@ public class PacketServer implements ChatBroadcaster {
         EventLoopGroup group = new NioEventLoopGroup();
         try {
             ServerBootstrap b = new ServerBootstrap();
-	    final Map<InetSocketAddress, Channel> resolutionTable = new HashMap<InetSocketAddress, Channel>();
+            final Map<InetSocketAddress, Channel> resolutionTable = new HashMap<InetSocketAddress, Channel>();
             b.group(group)
              .channel(NioServerSocketChannel.class)
              .handler(new ChannelInitializer<NioServerSocketChannel>() {
-		@Override
-		protected void initChannel(NioServerSocketChannel c) throws Exception {
-		    c.pipeline().addLast(new ChildChannelResolver(resolutionTable));
-		}
-	    })
+                @Override
+                protected void initChannel(NioServerSocketChannel c) throws Exception {
+                    c.pipeline().addLast(new ChildChannelResolver(resolutionTable));
+                }
+             })
              .option(ChannelOption.SO_BROADCAST, true)
              .childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override
@@ -66,7 +66,7 @@ public class PacketServer implements ChatBroadcaster {
                     c.pipeline().addLast(
                             new PacketEncoder(), new DataEncoder(),
                             new PacketDecoder(), new DataDecoder(),
-			    new ChildChannelTablePopulator(resolutionTable),
+                            new ChildChannelTablePopulator(resolutionTable),
                             new PacketServerHandler(clientLock, clients, getIncomingPackets()));
                 }
             });
@@ -124,9 +124,9 @@ public class PacketServer implements ChatBroadcaster {
         }
         InetSocketAddress client = clients.get(clientId);
         if (client != null) {
-	    System.out.println("channel writeable: " + channel.isWritable());
+            System.out.println("channel writeable: " + channel.isWritable());
             channel.writeAndFlush(new AddressedData(data, null, client));
-	}
+        }
     }
     
     public void sendChat(int clientId, String message) {

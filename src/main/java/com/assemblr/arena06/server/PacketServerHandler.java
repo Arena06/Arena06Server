@@ -22,7 +22,6 @@ public class PacketServerHandler extends SimpleChannelInboundHandler<AddressedDa
         this.output = output;
     }
     
-    
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, AddressedData msg) throws Exception {
         Integer clientId;
