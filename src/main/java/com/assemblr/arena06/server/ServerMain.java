@@ -20,8 +20,6 @@ public class ServerMain {
     private final Thread runner;
     private boolean running = false;
     
-    private long mapSeed = System.currentTimeMillis();
-    
     private boolean inRound = false;
     private double nextMatchCountDown = -1;
     
@@ -54,7 +52,7 @@ public class ServerMain {
     
     public ServerMain(int port) {
         server = new PacketServer(port);
-        spriteUpdater = new SpriteUpdater(server, this, mapSeed);
+        spriteUpdater = new SpriteUpdater(server, this, System.currentTimeMillis());
         runner = new Thread(new Runnable() {
             public void run() {
                 long lastUpdate = System.currentTimeMillis();
@@ -141,7 +139,7 @@ public class ServerMain {
                 "type", "login",
                 "id", id,
                 "data", player.serializeState(),
-                "map-seed", mapSeed
+                "map-seed", spriteUpdater.getMapSeed()
             ));
             server.sendBroadcast(ImmutableMap.<String, Object>of(
                 "type", "sprite",
@@ -249,13 +247,16 @@ public class ServerMain {
             if (args.length == 0) return;
             String subcommand = args[0];
             if (subcommand.equalsIgnoreCase("regen")) {
-                mapSeed = System.currentTimeMillis();
                 server.sendChatBroadcast("# reloading map");
+                spriteUpdater.setMapSeed(System.currentTimeMillis());
+                spriteUpdater.randomizePlayerPositions(livingPlayers);
                 server.sendBroadcast(ImmutableMap.<String, Object>of(
                         "type", "map",
                         "action", "load",
-                        "seed", mapSeed
+                        "seed", spriteUpdater.getMapSeed()
                 ));
+                broadcastSpriteList();
+                
             }
         } else if (command.equalsIgnoreCase("me")) {
             server.sendChatBroadcast("* " + sender.getName() + " " + Joiner.on(" ").skipNulls().join(args));

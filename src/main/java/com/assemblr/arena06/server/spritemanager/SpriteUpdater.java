@@ -22,7 +22,7 @@ public class SpriteUpdater {
     private Map<Integer, UpdateableSprite> updateableSprites = new HashMap<Integer, UpdateableSprite>();
     private final PacketServer server;
     private final ServerMain mainServer;
-    private double mapSeed;
+    private long mapSeed;
     private TileType[][] map;
     private MapGenerator mapGenerator = new RoomGenerator();
     private final SpriteCollisionManager spriteCollisionManager = new SpriteCollisionManager();
@@ -110,8 +110,17 @@ public class SpriteUpdater {
             do {
                 player.setPosition(new Point2D.Double(random.nextInt(map.length) * MapGenerator.TILE_SIZE, random.nextInt(map[0].length) * MapGenerator.TILE_SIZE));
             } while (map[(int) Math.round(player.getPosition().x / MapGenerator.TILE_SIZE)][(int) Math.round(player.getPosition().y / MapGenerator.TILE_SIZE)] != TileType.FLOOR);
-            
-            
+            System.out.println("player pos: " + player.getPosition());
         }
     }
+    
+    public void setMapSeed(long mapSeed) {
+        this.mapSeed = mapSeed;
+        map = mapGenerator.generateMap(mapSeed);
+    }
+    
+    public long getMapSeed() {
+        return mapSeed;
+    }
+    
 }
