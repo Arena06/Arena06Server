@@ -52,12 +52,6 @@ public class PacketServer implements ChatBroadcaster {
             ServerBootstrap b = new ServerBootstrap();
             b.group(group)
              .channel(NioServerSocketChannel.class)
-             .handler(new ChannelInitializer<NioServerSocketChannel>() {
-                @Override
-                protected void initChannel(NioServerSocketChannel c) throws Exception {
-                    c.pipeline().addLast();
-                }
-             })
              .option(ChannelOption.SO_KEEPALIVE, true)
              .childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override

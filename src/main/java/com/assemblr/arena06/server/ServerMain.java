@@ -10,7 +10,6 @@ import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,7 +21,6 @@ public class ServerMain {
     private boolean running = false;
     
     private long mapSeed = System.currentTimeMillis();
-    private long lastKeepAliveCheck = 0;
     
     private boolean inRound = false;
     private double nextMatchCountDown = -1;
@@ -35,8 +33,6 @@ public class ServerMain {
     private int nextSprite = 1;
     private Map<Integer, Integer> clients = new HashMap<Integer, Integer>();
     private SpriteUpdater spriteUpdater;
-    
-    private List<Integer> activeClients = new LinkedList<Integer>();
     
     private Map<Integer, Player> players = new HashMap<Integer, Player>();
     private List<Integer> livingPlayers = new ArrayList<Integer>();
@@ -108,11 +104,6 @@ public class ServerMain {
         while ((packet = server.getIncomingPackets().poll()) != null) {
             processPacket(packet);
         }
-        if (System.currentTimeMillis() - lastKeepAliveCheck > 8000) {
-            checkClients();
-            activeClients.clear();
-            lastKeepAliveCheck = System.currentTimeMillis();
-        }
         spriteUpdater.updateAllSprites(delta);
         if (nextMatchCountDown > 0) {
             nextMatchCountDown -= delta;
@@ -133,8 +124,6 @@ public class ServerMain {
             server.sendData(clientId, ImmutableMap.<String, Object>of(
                 "type", "handshake"
             ));
-        } else if (type.equals("keep-alive")) {
-            activeClients.add(clientId);
         } else if (type.equals("login")) {
             Player player = new Player();
             player.updateState((Map<String, Object>) packet.get("data"));
@@ -345,26 +334,6 @@ public class ServerMain {
         }
         spriteUpdater.randomizePlayerPositions(livingPlayers);
         broadcastSpriteList();
-    }
-    private void checkClients() {
-        for (Map.Entry<Integer, Integer> client : clients.entrySet()) {
-            if (!activeClients.contains(client.getKey())) {
-                killPlayer(client.getValue());
-                server.removeClient(client.getKey());
-                Integer id = clients.remove(client.getKey());
-                if (id == null) {
-                    return;
-                }
-                Player player = (Player) getSprites().remove(id);
-                System.out.println("player " + player.getName() + " has been kicked for inactivity");
-                server.sendBroadcast(ImmutableMap.<String, Object>of(
-                        "type", "sprite",
-                        "action", "remove",
-                        "id", id
-                ));
-                 server.sendChatBroadcast("~ " + ((Player) getSprites().get(client.getValue())).getName() + " has been kicked for inactivity", client.getKey());
-            }
-        }
     }
     
     public void killPlayer(int id) {
