@@ -1,38 +1,29 @@
 package com.assemblr.arena06.server;
 
-import com.assemblr.arena06.common.net.AddressedData;
+import com.assemblr.arena06.common.packet.Packet;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableMap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Queue;
 
-public class PacketServerHandler extends SimpleChannelInboundHandler<AddressedData> {
+public class PacketServerHandler extends SimpleChannelInboundHandler<Packet> {
     
-    private int nextClient = 1;
     private final Object clientLock;
-    private final BiMap<Integer, InetSocketAddress> clients;
+    private final BiMap<Integer, Channel> clients;
     private final Queue<Map<String, Object>> output;
     
-    public PacketServerHandler(Object clientLock, BiMap<Integer, InetSocketAddress> clients, Queue<Map<String, Object>> output) {
+    public PacketServerHandler(Object clientLock, BiMap<Integer, Channel> clients, Queue<Map<String, Object>> output) {
         this.clientLock = clientLock;
         this.clients = clients;
         this.output = output;
     }
     
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, AddressedData msg) throws Exception {
-        Integer clientId;
-        synchronized (clientLock) {
-            clientId = clients.inverse().get(msg.getSender());
-            if (clientId == null) {
-                clientId = nextClient;
-                clients.put(clientId, msg.getSender());
-                nextClient++;
-            }
-        }
+    protected void channelRead0(ChannelHandlerContext ctx, Packet msg) throws Exception {
+        Integer clientId = clients.inverse().get(ctx.channel());
         output.add(ImmutableMap.<String, Object>builder()
                 .putAll(msg.getData())
                 .put("client-id", clientId)
