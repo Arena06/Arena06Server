@@ -20,6 +20,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
@@ -64,8 +66,8 @@ public class PacketServer implements ChatBroadcaster {
                 @Override
                 protected void initChannel(SocketChannel c) throws Exception {
                     c.pipeline().addLast(
-                            new PacketEncoder(), new DataEncoder(),
-                            new PacketDecoder(), new DataDecoder(),
+                            new LengthFieldPrepender(2),                          new PacketEncoder(), new DataEncoder(),
+                            new LengthFieldBasedFrameDecoder(0xFFFF, 0, 2, 0, 2), new PacketDecoder(), new DataDecoder(),
                             new ChildChannelTablePopulator(resolutionTable),
                             new PacketServerHandler(clientLock, clients, getIncomingPackets()));
                 }
