@@ -4,9 +4,14 @@ import com.assemblr.arena06.common.data.Player;
 import com.assemblr.arena06.common.data.Sprite;
 import com.assemblr.arena06.common.data.UpdateableSprite;
 import com.assemblr.arena06.server.spritemanager.SpriteUpdater;
+import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.Ordering;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,13 +31,13 @@ public class ServerMain {
     private final double timeBetweenFullUpdates = 100;
     private double timeElapsedBetweenFullUpdates;
     
-    private List<String> winners = new ArrayList<String>();
+    private Map<Player, Integer> winners = new HashMap<Player, Integer>();
     
     private int nextSprite = 1;
     private Map<Integer, Integer> clients = new HashMap<Integer, Integer>();
     private SpriteUpdater spriteUpdater;
     
-    private Map<Integer, Player> players = new HashMap<Integer, Player>();
+    private BiMap<Integer, Player> players = HashBiMap.create();
     private List<Integer> livingPlayers = new ArrayList<Integer>();
     
     public static void main(String[] args) throws Exception {
@@ -113,7 +118,6 @@ public class ServerMain {
     }
     
     private void processPacket(Map<String, Object> packet) {
-	
         int clientId = (Integer) packet.get("client-id");
         String type = (String) packet.get("type");
         if (type == null) return;
@@ -123,7 +127,6 @@ public class ServerMain {
                 "type", "handshake"
             ));
         } else if (type.equals("login")) {
-            System.out.println("logging in player");
             Player player = new Player();
             player.updateState((Map<String, Object>) packet.get("data"));
             player.setAlive(false);
@@ -191,12 +194,12 @@ public class ServerMain {
                         ), clientId);
                     }
                 } else {
-                server.sendBroadcast(ImmutableMap.<String, Object>of(
-                    "type", "sprite",
-                    "action", "update",
-                    "id", packet.get("id"),
-                    "data", packet.get("data")
-                ), clientId);
+                    server.sendBroadcast(ImmutableMap.<String, Object>of(
+                            "type", "sprite",
+                            "action", "update",
+                            "id", packet.get("id"),
+                            "data", packet.get("data")
+                    ), clientId);
                 }
             } else if (action.equals("create")) {
                     List<Object> spriteData = (List<Object>) packet.get("data");
@@ -216,8 +219,8 @@ public class ServerMain {
                     }
                     
             } else if (action.equals("validate")) {
-                if (getSprites().get(packet.get("id")) instanceof Player) {
-                    ((Player) getSprites().get(packet.get("id"))).setClientIsCurrent(true);
+                if (getSprites().get((Integer) packet.get("id")) instanceof Player) {
+                    ((Player) getSprites().get((Integer) packet.get("id"))).setClientIsCurrent(true);
                 }
             }
         } else if (type.equals("chat")) {
@@ -268,45 +271,44 @@ public class ServerMain {
                 server.sendChatBroadcast("~ Starting a new round");
                 nextMatchCountDown = 5;
             }
-        } else if (command.equalsIgnoreCase("winners")) {
-            if (winners.size() == 0) {
+        } else if (command.equalsIgnoreCase("scores") || command.equalsIgnoreCase("scoreboard")) {
+            if (winners.isEmpty()) {
                 server.sendChat(clientId, "~ No matches have been won");
             } else {
-            String temp = "~ The past winners have been: ";
-            for (int i = 0; i <winners.size(); i++) {
-                temp += winners.get(i);
-                temp +=", ";
+                String temp = "~ Scoreboard ~\n";
+                for (Map.Entry<Player, Integer> winner : ImmutableSortedMap.copyOf(winners, Ordering.natural().reverse().onResultOf(Functions.forMap(winners)).compound(Ordering.arbitrary())).entrySet()) {
+                    temp += "- " + winner.getKey().getName() + ":  " + winner.getValue() + "\n";
+                }
+                server.sendChat(clientId, temp);
             }
-            temp = temp.substring(0, temp.length() - 2);
-            server.sendChat(clientId, temp);
-        }}
+        }
     }
     
     private void sendSpriteList(int clientId) {
         ImmutableMap.Builder<String, Object> data = ImmutableMap.<String, Object>builder();
-                for (Map.Entry<Integer, Sprite> entry : getSprites().entrySet()) {
-                    data.put(entry.getKey().toString(), ImmutableList.<Object>of(
-                             entry.getValue().getClass().getName(), entry.getValue().serializeState()));
-                }
-                server.sendData(clientId, ImmutableMap.<String, Object>of(
-                    "type", "request",
-                    "request", "sprite-list",
-                    "data", data.build()
-                ));
+        for (Map.Entry<Integer, Sprite> entry : getSprites().entrySet()) {
+            data.put(entry.getKey().toString(), ImmutableList.<Object>of(
+                    entry.getValue().getClass().getName(), entry.getValue().serializeState()));
+        }
+        server.sendData(clientId, ImmutableMap.<String, Object>of(
+                "type", "request",
+                "request", "sprite-list",
+                "data", data.build()
+        ));
     }
     
     private void broadcastSpriteList() {
         ImmutableMap.Builder<String, Object> data = ImmutableMap.<String, Object>builder();
-                for (Map.Entry<Integer, Sprite> entry : getSprites().entrySet()) {
-                    data.put(entry.getKey().toString(), ImmutableList.<Object>of(
-                             entry.getValue().getClass().getName(), entry.getValue().serializeState()));
-                }
-                server.sendBroadcast(ImmutableMap.<String, Object>of(
-                    "type", "request",
-                    "request", "sprite-list",
-                    "data", data.build(),
-                    "level", "force"
-                ));
+        for (Map.Entry<Integer, Sprite> entry : getSprites().entrySet()) {
+            data.put(entry.getKey().toString(), ImmutableList.<Object>of(
+                    entry.getValue().getClass().getName(), entry.getValue().serializeState()));
+        }
+        server.sendBroadcast(ImmutableMap.<String, Object>of(
+                "type", "request",
+                "request", "sprite-list",
+                "data", data.build(),
+                "level", "force"
+        ));
     }
     
     
@@ -349,23 +351,23 @@ public class ServerMain {
     }
     
     public void killPlayer(int id) {
-         Player player = ((Player) getSprites().get(id));
-         player.kill();
-         player.setClientIsCurrent(false);
-         livingPlayers.remove((Object) id);
-         server.sendBroadcast(
-                 ImmutableMap.<String, Object>of(
-                 "type", "sprite",
-                 "action", "update",
-                 "id", id,
-                 "data", getSprites().get(id).serializeState()
-                 ));
-         if (livingPlayers.size() == 1) {
-             server.sendChatBroadcast("~ Player " + ((Player)(getSprites().get(livingPlayers.get(0)))).getName() + " has won the match");
-             nextMatchCountDown = 5;
-             winners.add(((Player)(getSprites().get(livingPlayers.get(0)))).getName());
-         }
-         
+        Player player = ((Player) getSprites().get(id));
+        player.kill();
+        player.setClientIsCurrent(false);
+        livingPlayers.remove(players.inverse().get(player));
+        server.sendBroadcast(ImmutableMap.<String, Object>of(
+                "type", "sprite",
+                "action", "update",
+                "id", id,
+                "data", getSprites().get(id).serializeState()
+        ));
+        if (livingPlayers.size() == 1) {
+            server.sendChatBroadcast("~ Player " + ((Player) (getSprites().get(livingPlayers.get(0)))).getName() + " has won the match");
+            nextMatchCountDown = 5;
+            
+            Player winner = (Player) getSprites().get(livingPlayers.get(0));
+            winners.put(winner, winners.containsKey(winner) ? winners.get(winner) + 1 : 1);
+        }
     }
 
     public Map<Integer, Sprite> getSprites() {
