@@ -8,6 +8,7 @@ import com.assemblr.arena06.common.data.UpdateableSprite;
 import com.assemblr.arena06.common.data.map.TileType;
 import com.assemblr.arena06.common.data.map.generators.MapGenerator;
 import com.assemblr.arena06.common.data.map.generators.RoomGenerator;
+import com.assemblr.arena06.common.data.weapon.Weapon;
 import com.assemblr.arena06.server.PacketServer;
 import com.assemblr.arena06.server.ServerMain;
 import com.google.common.collect.ImmutableMap;
@@ -119,7 +120,7 @@ public class SpriteUpdater {
     
     public void putRandomAmoPickups(int number) {
         for (int i = 0; i < number; i++) {
-            AmmoPickup ammo = new AmmoPickup();
+            AmmoPickup ammo = new AmmoPickup(Weapon.getRandomWeapon(), 5);
             
         do {
                 ammo.setPosition(new Point2D.Double(random.nextInt(map.length) * MapGenerator.TILE_SIZE, random.nextInt(map[0].length) * MapGenerator.TILE_SIZE));
