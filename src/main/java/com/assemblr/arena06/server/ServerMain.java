@@ -340,10 +340,10 @@ public class ServerMain {
         for (Integer id : livingPlayers) {
             Player player  = (Player) getSprites().get(id);
             player.setAlive(true);
-            player.fillMagazine();
+            player.setStartingAmmo();
         }
         spriteUpdater.randomizePlayerPositions(livingPlayers);
-        spriteUpdater.putRandomAmoPickups(1);
+        spriteUpdater.putRandomAmoPickups(7);
         broadcastSpriteList();
     }
     
