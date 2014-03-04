@@ -7,6 +7,8 @@
 package com.assemblr.arena06.server.spritemanager;
 
 import com.assemblr.arena06.common.chat.ChatBroadcaster;
+import com.assemblr.arena06.common.data.AmmoPickup;
+import com.assemblr.arena06.common.data.Player;
 import com.assemblr.arena06.common.data.Sprite;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +24,7 @@ public class SpriteCollisionManager {
         for (Map.Entry<Integer, Sprite> sprite : sprites.entrySet()) {
             Integer id = sprite.getKey();
             Sprite s1 = sprite.getValue();
+            spritesRemaining.remove(id);
             for (Map.Entry<Integer, Sprite> interactor : spritesRemaining.entrySet()) {
                 Sprite s2 = interactor.getValue();
                 if (s1.getBounds().intersects(s2.getBounds())) {

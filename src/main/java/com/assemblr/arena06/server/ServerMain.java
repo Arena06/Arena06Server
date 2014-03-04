@@ -344,7 +344,7 @@ public class ServerMain {
             player.fillMagazine();
         }
         spriteUpdater.randomizePlayerPositions(livingPlayers);
-        spriteUpdater.putRandomAmoPickups(10);
+        spriteUpdater.putRandomAmoPickups(1);
         broadcastSpriteList();
     }
     
@@ -365,11 +365,6 @@ public class ServerMain {
              nextMatchCountDown = 5;
              winners.add(((Player)(getSprites().get(livingPlayers.get(0)))).getName());
          }
-         
-         
-         
-         
-         
          
     }
 
