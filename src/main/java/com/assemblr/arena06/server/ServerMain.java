@@ -123,6 +123,7 @@ public class ServerMain {
                 "type", "handshake"
             ));
         } else if (type.equals("login")) {
+            System.out.println("logging in player");
             Player player = new Player();
             player.updateState((Map<String, Object>) packet.get("data"));
             player.setAlive(false);
@@ -309,7 +310,7 @@ public class ServerMain {
     }
     
     
-    private int addSprite(Sprite s) {
+    public int addSprite(Sprite s) {
         getSprites().put(nextSprite, s);
         if (s instanceof UpdateableSprite) {
             getUpdateableSprites().put(nextSprite, (UpdateableSprite)s);
@@ -317,6 +318,7 @@ public class ServerMain {
         nextSprite++;
         return nextSprite - 1;
     }
+    
     private void startNewRound() {
         if (players.size() == 1) {
             inRound = false;
@@ -324,6 +326,14 @@ public class ServerMain {
             broadcastSpriteList();
             return;
         }
+        for (Map.Entry<Integer, Sprite> entry : (new HashMap<Integer, Sprite>(spriteUpdater.getSprites()).entrySet())) {
+            if (!(entry.getValue() instanceof Player)) {
+                spriteUpdater.getSprites().remove(entry.getKey());
+                if (entry.getValue() instanceof UpdateableSprite) {
+                    spriteUpdater.getUpdateableSprites().remove(entry.getKey());
+                }
+            }
+        } 
         inRound = true;
         server.sendChatBroadcast("~ Starting a new round");
         livingPlayers.clear();
@@ -334,6 +344,7 @@ public class ServerMain {
             player.fillMagazine();
         }
         spriteUpdater.randomizePlayerPositions(livingPlayers);
+        spriteUpdater.putRandomAmoPickups(10);
         broadcastSpriteList();
     }
     

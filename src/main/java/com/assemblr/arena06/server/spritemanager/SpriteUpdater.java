@@ -1,5 +1,6 @@
 package com.assemblr.arena06.server.spritemanager;
 
+import com.assemblr.arena06.common.data.AmmoPickup;
 import com.assemblr.arena06.common.data.Bullet;
 import com.assemblr.arena06.common.data.Player;
 import com.assemblr.arena06.common.data.Sprite;
@@ -103,6 +104,7 @@ public class SpriteUpdater {
     public Map<Integer, UpdateableSprite> getUpdateableSprites() {
         return updateableSprites;
     }
+    
     Random random = new Random();
     public void randomizePlayerPositions(List<Integer> players) {
         for (int i : players) {
@@ -123,4 +125,14 @@ public class SpriteUpdater {
         return mapSeed;
     }
     
+    public void putRandomAmoPickups(int number) {
+        for (int i = 0; i < number; i++) {
+            AmmoPickup ammo = new AmmoPickup();
+            
+        do {
+                ammo.setPosition(new Point2D.Double(random.nextInt(map.length) * MapGenerator.TILE_SIZE, random.nextInt(map[0].length) * MapGenerator.TILE_SIZE));
+            } while (map[(int) Math.round(ammo.getPosition().x / MapGenerator.TILE_SIZE)][(int) Math.round(ammo.getPosition().y / MapGenerator.TILE_SIZE)] != TileType.FLOOR);
+        mainServer.addSprite(ammo);
+        }
+    }
 }
