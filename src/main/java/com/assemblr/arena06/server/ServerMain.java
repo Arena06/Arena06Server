@@ -27,6 +27,7 @@ public class ServerMain {
     
     private boolean inRound = false;
     private double nextMatchCountDown = -1;
+    private boolean regenMapNextRound = false;
     
     private final double timeBetweenFullUpdates = 100;
     private double timeElapsedBetweenFullUpdates;
@@ -253,13 +254,8 @@ public class ServerMain {
             if (subcommand.equalsIgnoreCase("regen")) {
                 server.sendChatBroadcast("# reloading map");
                 spriteUpdater.setMapSeed(System.currentTimeMillis());
-                spriteUpdater.randomizePlayerPositions(livingPlayers);
-                server.sendBroadcast(ImmutableMap.<String, Object>of(
-                        "type", "map",
-                        "action", "load",
-                        "seed", spriteUpdater.getMapSeed()
-                ));
-                broadcastSpriteList();
+                regenMapNextRound = true;
+                nextMatchCountDown = 5;
                 
             }
         } else if (command.equalsIgnoreCase("me")) {
@@ -336,6 +332,15 @@ public class ServerMain {
                 }
             }
         } 
+        if (regenMapNextRound) {
+            spriteUpdater.setMapSeed(System.currentTimeMillis());
+            server.sendBroadcast(ImmutableMap.<String, Object>of(
+                        "type", "map",
+                        "action", "load",
+                        "seed", spriteUpdater.getMapSeed()
+                ));
+            regenMapNextRound = false;
+        }
         inRound = true;
         server.sendChatBroadcast("~ Starting a new round");
         livingPlayers.clear();
