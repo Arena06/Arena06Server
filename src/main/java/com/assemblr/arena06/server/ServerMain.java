@@ -320,7 +320,9 @@ public class ServerMain {
     private void startNewRound() {
         if (players.size() == 1) {
             inRound = false;
-            players.entrySet().iterator().next().getValue().kill();
+            Player onlyPlayer = players.entrySet().iterator().next().getValue();
+            onlyPlayer.kill();
+            onlyPlayer.setPosition(onlyPlayer.getPosition());//This line is required to make the player position dirty and let it get bradcasted in the next line
             broadcastSpriteList();
             return;
         }
