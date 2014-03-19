@@ -113,7 +113,6 @@ public class SpriteUpdater {
             do {
                 player.setPosition(new Point2D.Double(random.nextInt(map.length) * MapGenerator.TILE_SIZE, random.nextInt(map[0].length) * MapGenerator.TILE_SIZE));
             } while (map[(int) Math.round(player.getPosition().x / MapGenerator.TILE_SIZE)][(int) Math.round(player.getPosition().y / MapGenerator.TILE_SIZE)] != TileType.FLOOR);
-            System.out.println("player pos: " + player.getPosition());
         }
     }
     
