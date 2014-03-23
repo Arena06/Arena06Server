@@ -51,7 +51,7 @@ public class ServerMain {
                 port = Integer.parseInt(flag[1]);
             }
         }
-        
+        System.out.println("Starting server on port: " + port);
         ServerMain main = new ServerMain(port);
         main.start();
     }
