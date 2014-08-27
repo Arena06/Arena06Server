@@ -132,12 +132,13 @@ public class ServerMain {
             player.updateState((Map<String, Object>) packet.get("data"));
             player.setAlive(false);
             int id = addSprite(player);
+            
             clients.put(clientId, id);
             players.put(id, player);
             if (!inRound) {
-                livingPlayers.add(id);
-                if (livingPlayers.size() == 2) {
-                    startNewRound();
+                
+                if (players.size() == 2) {
+                    nextMatchCountDown = 5;
                 }
             }
             server.sendData(clientId, ImmutableMap.<String, Object>of(
@@ -321,6 +322,7 @@ public class ServerMain {
         if (players.size() == 1) {
             inRound = false;
             Player onlyPlayer = players.entrySet().iterator().next().getValue();
+            livingPlayers.remove(players.entrySet().iterator().next().getKey());
             onlyPlayer.kill();
             onlyPlayer.setPosition(onlyPlayer.getPosition());//This line is required to make the player position dirty and let it get bradcasted in the next line
             broadcastSpriteList();
