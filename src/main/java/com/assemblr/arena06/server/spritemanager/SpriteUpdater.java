@@ -87,10 +87,14 @@ public class SpriteUpdater {
     private List<Integer> dirtySprites = new ArrayList<Integer>();
     
     private boolean shouldBeDestroyed(Bullet b) {
-        return map[b.getTileX()][b.getTileY()] == TileType.WALL || map[b.getTileX()][b.getTileY()] == TileType.NONE
-                || map[b.getTileXRightSide()][b.getTileY()] == TileType.WALL || map[b.getTileXRightSide()][b.getTileY()] == TileType.NONE
-                || map[b.getTileX()][b.getTileYBottom()] == TileType.WALL || map[b.getTileX()][b.getTileYBottom()] == TileType.NONE
-                || map[b.getTileXRightSide()][b.getTileYBottom()] == TileType.WALL || map[b.getTileXRightSide()][b.getTileYBottom()] == TileType.NONE;
+        try {
+            return map[b.getTileX()][b.getTileY()] == TileType.WALL || map[b.getTileX()][b.getTileY()] == TileType.NONE
+                    || map[b.getTileXRightSide()][b.getTileY()] == TileType.WALL || map[b.getTileXRightSide()][b.getTileY()] == TileType.NONE
+                    || map[b.getTileX()][b.getTileYBottom()] == TileType.WALL || map[b.getTileX()][b.getTileYBottom()] == TileType.NONE
+                    || map[b.getTileXRightSide()][b.getTileYBottom()] == TileType.WALL || map[b.getTileXRightSide()][b.getTileYBottom()] == TileType.NONE;
+        } catch (ArrayIndexOutOfBoundsException ariobe) {
+            return true;
+        }
     }
     /**
      * @return the sprites

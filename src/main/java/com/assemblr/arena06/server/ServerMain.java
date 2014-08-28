@@ -253,7 +253,7 @@ public class ServerMain {
             if (args.length == 0) return;
             String subcommand = args[0];
             if (subcommand.equalsIgnoreCase("regen")) {
-                server.sendChatBroadcast("# reloading map");
+                server.sendChatBroadcast("~ Reloading map");
                 spriteUpdater.setMapSeed(System.currentTimeMillis());
                 regenMapNextRound = true;
                 nextMatchCountDown = 5;
