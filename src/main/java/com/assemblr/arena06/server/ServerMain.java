@@ -285,7 +285,7 @@ public class ServerMain {
         ImmutableMap.Builder<String, Object> data = ImmutableMap.<String, Object>builder();
         for (Map.Entry<Integer, Sprite> entry : getSprites().entrySet()) {
             data.put(entry.getKey().toString(), ImmutableList.<Object>of(
-                    entry.getValue().getClass().getName(), entry.getValue().serializeState()));
+                    entry.getValue().getClass().getName(), entry.getValue().serializeState(true)));
         }
         server.sendData(clientId, ImmutableMap.<String, Object>of(
                 "type", "request",
